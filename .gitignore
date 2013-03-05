@@ -4,3 +4,4 @@ META-INF
 NATIVE
 *.clj
 *.class
+*.iml
