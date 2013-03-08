@@ -10,6 +10,7 @@ import structure.opengl.ShaderProgram;
 import structure.tree.QuadTree;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -41,13 +42,13 @@ public class Project1 extends GameApplicationFrame {
     @Override
     public void initData() {
         // TODO: Fix QuadTree stuff
-        QuadTree qt = new QuadTree(640, 480);
-        qt.add(new Test(100, 100, 100, 100));
-        qt.add(new Test(200, 200, 100, 100));
-        qt.add(new Test(300, 300, 50, 50));
-        qt.add(new Test(400, 400, 50, 50));
-        qt.add(new Test(500, 500, 50, 50));
-        System.out.println(qt.getIntersecting(new Test(150, 150, 100, 100)));
+//        QuadTree qt = new QuadTree(640, 480);
+//        qt.add(new Test(100, 100, 100, 100));
+//        qt.add(new Test(200, 200, 100, 100));
+//        qt.add(new Test(300, 300, 50, 50));
+//        qt.add(new Test(400, 400, 50, 50));
+//        qt.add(new Test(500, 500, 50, 50));
+//        System.out.println(qt.getIntersecting(new Test(150, 150, 100, 100)));
 
         final float[] vertexPositions = new float[] {
                 0.75f, 1.00f, 0.0f, 1.0f,
@@ -55,30 +56,26 @@ public class Project1 extends GameApplicationFrame {
                 -0.75f, -0.75f, 0.0f, 1.0f
         };
         final float[] vertexPositions2 = new float[] {
-                0.0f, 0.5f, 0.0f, 0.9f,
-                0.5f, -0.366f, 0.0f, 0.9f,
-                -0.5f, -0.366f, 0.0f, 0.9f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f
+                // LAYOUT
+                // X Y Z W    R G B A
+                0.0f, 0.5f, 0.0f, 0.9f, 1.0f, 0.0f, 0.0f, 1.0f,
+                0.5f, -0.366f, 0.0f, 0.9f, 0.0f, 1.0f, 0.0f, 1.0f,
+                -0.5f, -0.366f, 0.0f, 0.9f, 0.0f, 0.0f, 1.0f, 1.0f
+        };
+        final float[] vertexPositions3 = new float[] {
+                0.0f,    0.5f, 0.0f, 1.0f,
+                0.5f, -0.366f, 0.0f, 1.0f,
+                -0.5f, -0.366f, 0.0f, 1.0f,
+                1.0f,    0.0f, 0.0f, 1.0f,
+                0.0f,    1.0f, 0.0f, 1.0f,
+                0.0f,    0.0f, 1.0f, 1.0f,
         };
 
-        FloatBuffer buf = BufferUtils.createFloatBuffer(vertexPositions.length);
-        buf.put(vertexPositions);
-        buf.flip();
-
-//        geometry = new Geometry(GL_TRIANGLES, 2, vertexPositions2);
         geometry = new Geometry();
-
-        vertexArray = glGenVertexArrays();
-        glBindVertexArray(vertexArray);
-        positionBufferObject = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
-        glBufferData(GL_ARRAY_BUFFER, buf, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 4, GL_FLOAT, false, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+//        geometry.addBufferOffset(vertexPositions3, GL_STATIC_DRAW, Geometry.VERTEX_4F, Geometry.VERTEX_4F);
+//        geometry.addBufferColumns(vertexPositions2, GL_STATIC_DRAW, Geometry.VERTEX_4F, Geometry.VERTEX_4F);
+        geometry.addBuffer(Arrays.copyOfRange(vertexPositions3, 0, 4 * 3), GL_STATIC_DRAW, Geometry.VERTEX_4F);
+        geometry.addBuffer(Arrays.copyOfRange(vertexPositions3, 4 * 3, 4 * 3 * 2), GL_STATIC_DRAW, Geometry.VERTEX_4F);
 
         colorProg = new ShaderProgram();
         colorProg.addFragmentShader("fragcolor.glsl");
@@ -106,13 +103,13 @@ public class Project1 extends GameApplicationFrame {
 
         colorProg.use();
         colorProg.setUniform("time", dt);
-//        geometry.draw();
+        geometry.draw();
         colorProg.stopUsing();
     }
 
     @Override
     public void cleanup() {
         colorProg.destroy();
-//        geometry.destroy();
+        geometry.destroy();
     }
 }

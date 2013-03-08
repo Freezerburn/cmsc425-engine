@@ -3,6 +3,8 @@ package structure.opengl;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -16,79 +18,25 @@ import static org.lwjgl.opengl.GL30.*;
  * Time: 10:22 AM
  */
 public class Geometry {
+    public static int MAX_VBO = 16;
     public static int VERTEX_1F = 0;
     public static int VERTEX_2F = 1;
     public static int VERTEX_3F = 2;
     public static int VERTEX_4F = 3;
 
-    protected static int currentVbo = -1;
+    protected static int currentVao = -1;
 
     protected int vao;
-    protected int type, bufferDataType;
-    protected int[] vbos;
+    protected int mode = GL_TRIANGLES;
+    protected int[] vbos = new int[MAX_VBO];
+    protected boolean usesIndices = false;
+    protected int indicesRef = 0, numIndicies = 0, numVertices = 0, numRows = 0;
+    protected short numBuffers = 0, numAttributes = 0;
     protected boolean destroyed = false;
-    protected int numVerts;
 
     public Geometry() {
         this.vao = glGenVertexArrays();
     }
-
-//    public Geometry(int type, float[]... buffers) {
-//        this.vao = glGenVertexArrays();
-//        this.type = type;
-//        this.vbos = new int[buffers.length];
-//        this.bufferDataType = GL_STATIC_DRAW;
-//        this.numVerts = buffers[0].length;
-//        FloatBuffer[] floatBuffers = new FloatBuffer[buffers.length];
-//        for(int i = 0; i < buffers.length; i++) {
-//            FloatBuffer buf = BufferUtils.createFloatBuffer(buffers[i].length);
-//            buf.put(buffers[i]);
-//            buf.flip();
-//            floatBuffers[i] = buf;
-//        }
-//        initBuffers(floatBuffers);
-//    }
-//
-//    public Geometry(int type, FloatBuffer... buffers) {
-//        this.vao = glGenVertexArrays();
-//        this.type = type;
-//        this.vbos = new int[buffers.length];
-//        this.bufferDataType = GL_STATIC_DRAW;
-//        this.numVerts = buffers[0].capacity();
-//        this.initBuffers(buffers);
-//    }
-//
-//    public Geometry(int type, int vertices, int... buffers) {
-//        this.vao = glGenVertexArrays();
-//        this.type = type;
-//        this.vbos = buffers;
-//        this.numVerts = vertices;
-//        this.bufferDataType = GL_STATIC_DRAW;
-//        for(int i = 0; i < buffers.length; i++) {
-//            glBindBuffer(GL_ARRAY_BUFFER, buffers[i]);
-//            glEnableVertexAttribArray(i);
-//            glVertexAttribPointer(i, 4, GL_FLOAT, false, 0, 0);
-//        }
-//    }
-//
-//    public Geometry(int type, int divisions, float[]... buffers) {
-//        this.vao = glGenVertexArrays();
-//        this.type = type;
-//        this.vbos = new int[buffers.length * divisions];
-//        this.bufferDataType = GL_STATIC_DRAW;
-//        this.numVerts = buffers[0].length / divisions;
-//        FloatBuffer[] floatBuffers = new FloatBuffer[buffers.length * divisions];
-//        for(int i = 0; i < buffers.length; i++) {
-//            for(int j = 0; j < divisions; j++) {
-//                int len = buffers[i].length / divisions;
-//                FloatBuffer buf = BufferUtils.createFloatBuffer(len);
-//                buf.put(buffers[i], len * j, len);
-//                buf.flip();
-//                floatBuffers[i * divisions + j] = buf;
-//            }
-//        }
-//        initBuffers(floatBuffers);
-//    }
 
     protected int getDataTypeSize(int dataType) {
         if(dataType == VERTEX_1F) {
@@ -105,50 +53,137 @@ public class Geometry {
         }
     }
 
-    public void addBuffer(float[] data, int usage, int drawMode, int... dataTypes) {
+    protected float[] convertColumnsToOffset(float[] data, float[] to, int rowSize, int... dataTypes) {
+        int startPos = 0, toPos = 0;
+        for(int i = 0; i < dataTypes.length; i++) {
+            int size = getDataTypeSize(dataTypes[i]);
+            for(int j = startPos; j < data.length; j += rowSize, toPos += size) {
+//                System.out.println(Arrays.toString(Arrays.copyOfRange(data, j, j + size)));
+                System.arraycopy(data, j, to, toPos, size);
+            }
+            startPos += size;
+        }
+//        System.out.println(Arrays.toString(to));
+        return to;
+    }
+
+    public void addBuffer(float[] data, int usage, int dataType) {
+        int dataTypeSize = getDataTypeSize(dataType);
+        checkForErrors(data, dataTypeSize, dataType);
+
+        uploadData(data, usage, numRows, dataType);
+    }
+
+    public void addBufferColumns(float[] data, int usage, int... dataTypes) {
         int rowSize = 0;
         for(int type : dataTypes) {
             rowSize += getDataTypeSize(type);
         }
+        checkForErrors(data, rowSize, dataTypes);
+
+        float[] converted = new float[data.length];
+        uploadData(convertColumnsToOffset(data, converted, rowSize, dataTypes), usage, numRows, dataTypes);
+    }
+
+    public void addBufferOffset(float[] data, int usage, int... dataTypes) {
+        int rowSize = 0;
+        for(int type : dataTypes) {
+            rowSize += getDataTypeSize(type);
+        }
+        checkForErrors(data, rowSize, dataTypes);
+
+        uploadData(data, usage, numRows, dataTypes);
+    }
+
+    private void checkForErrors(float[] data, int rowSize, int... dataTypes) {
+        // Make sure we never use more than 16 attributes.
+        // I /believe/ that 16 is the max number of attributes OpenGL supports, according to a tutorial I read.
+        if(numAttributes + dataTypes.length >= MAX_VBO) {
+            throw new IllegalStateException("Can only have up to 16 attributes, requested: " + (numAttributes + dataTypes.length));
+        }
+
+        // Check that the number of "rows" matches anything previously added, or initializes.
+        // The number of rows is basically equivalent to the number of vertices that the data defines. At least,
+        // I think it is. This might make the next check redundant...
+        if(numRows == 0) {
+            numRows = data.length / rowSize;
+        }
+        else if(numRows != (data.length / rowSize)) {
+            System.err.println(Arrays.toString(data));
+            throw new IllegalStateException("Number of rows in buffers don't match: " + numRows + " vs " + (data.length / rowSize));
+        }
+
+        // Check that the number of vertices is equivalent to previous data, or initialize.
+        if(numVertices == 0) {
+            numVertices = data.length / rowSize;
+        }
+        else {
+            int addingVerts = data.length / rowSize;
+            if(addingVerts != numVertices) {
+                System.err.println(Arrays.toString(data));
+                throw new IllegalStateException("Vertex count for buffers don't match: " + numVertices + " vs " + addingVerts);
+            }
+        }
+    }
+
+    private void uploadData(float[] data, int usage, int numRows, int... dataTypes) {
+        glBindVertexArray(vao);
 
         FloatBuffer buf = BufferUtils.createFloatBuffer(data.length);
         buf.put(data);
+        buf.flip();
         int vbo = glGenBuffers();
+        vbos[numBuffers++] = vbo;
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(vbo, buf, usage);
+        glBufferData(GL_ARRAY_BUFFER, buf, usage);
 
-        glBindVertexArray(vao);
         int startPos = 0;
         for(int i = 0; i < dataTypes.length; i++) {
-            glEnableVertexAttribArray(i);
-            glVertexAttribPointer(i, getDataTypeSize(dataTypes[i]), GL_FLOAT, false, rowSize, startPos);
+            glEnableVertexAttribArray(numAttributes + i);
+            glVertexAttribPointer(numAttributes + i, getDataTypeSize(dataTypes[i]), GL_FLOAT, false, 0, startPos * 4);
+//            System.out.println((numAttributes + i) + ", " + getDataTypeSize(dataTypes[i]) + ", " + startPos);
+            startPos += numRows * getDataTypeSize(dataTypes[i]);
         }
+//        System.out.println("Num verts: " + numVertices);
+        if(usesIndices) {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesRef);
+        }
+        numAttributes += dataTypes.length;
         glBindVertexArray(0);
     }
 
-    protected void initBuffers(FloatBuffer... buffers) {
+    public void setIndices(int[] indices) {
+        usesIndices = true;
+        IntBuffer buf = BufferUtils.createIntBuffer(indices.length);
+        buf.put(indices);
+        buf.flip();
+
         glBindVertexArray(vao);
-        for(int i = 0; i < buffers.length; i++) {
-            FloatBuffer buf = buffers[i];
-            int positionBufferObject = glGenBuffers();
-            vbos[i] = positionBufferObject;
-            glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
-            glBufferData(GL_ARRAY_BUFFER, buf, bufferDataType);
-            glEnableVertexAttribArray(i);
-            glVertexAttribPointer(i, 4, GL_FLOAT, false, 0, 0);
-        }
+        indicesRef = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesRef);
+        glBufferData(indicesRef, buf, GL_STATIC_DRAW);
+        glBindVertexArray(0);
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
     }
 
     public void draw() {
-        if(currentVbo != vao) {
-            currentVbo = vao;
+        if(currentVao != vao) {
+            currentVao = vao;
             glBindVertexArray(vao);
         }
-        glDrawArrays(type, 0, numVerts);
+        if(usesIndices) {
+            glDrawElements(0, (IntBuffer)null);
+        }
+        else {
+            glDrawArrays(mode, 0, numVertices);
+        }
         // For now, we immediately unbind the vao when done drawing. This might change later,
         // but is deliberately done here to prevent code outside of the Geometry class from
         // modifying the vao's state.
-        currentVbo = 0;
+        currentVao = 0;
         glBindVertexArray(0);
     }
 
@@ -164,13 +199,5 @@ public class Geometry {
 
     public boolean isValid() {
         return destroyed;
-    }
-
-    public boolean isDynamic() {
-        return bufferDataType == GL_DYNAMIC_DRAW;
-    }
-
-    public boolean isStreaming() {
-        return bufferDataType == GL_STREAM_DRAW;
     }
 }

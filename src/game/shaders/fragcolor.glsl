@@ -12,8 +12,8 @@ const vec4 secondColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
 void main() {
     float lerpTime = time * 1.5f / fragLoopDuration;
-    //outputColor = theColor;
-    outputColor = mix(theColor,
-        mix(firstColor, secondColor, sin(lerpTime)),
-        sin(lerpTime));
+    outputColor = theColor;
+    //outputColor = mix(theColor,
+        //mix(firstColor, secondColor, sin(lerpTime)),
+        //sin(lerpTime));
 }
