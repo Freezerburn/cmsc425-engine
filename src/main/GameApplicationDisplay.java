@@ -45,6 +45,7 @@ public class GameApplicationDisplay implements GameApplicationRunnable {
             initBase();
             initGL();
             initData();
+            onResize(windowWidth, windowHeight);
             mainLoop();
             cleanup();
             Display.destroy();

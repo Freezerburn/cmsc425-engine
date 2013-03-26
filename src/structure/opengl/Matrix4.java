@@ -60,6 +60,22 @@ public class Matrix4 {
         this.m33 = m33;
     }
 
+    public Matrix4 scale(float x, float y, float z) {
+        return Matrix4.scale(this, x, y, z, new Matrix4());
+    }
+
+    public Matrix4 scaleLocal(float x, float y, float z) {
+        return Matrix4.scale(this, x, y, z, this);
+    }
+
+    public Matrix4 translate(float x, float y, float z) {
+        return Matrix4.translate(this, x, y, z, new Matrix4());
+    }
+
+    public Matrix4 translateLocal(float x, float y, float z) {
+        return Matrix4.translate(this, x, y, z, this);
+    }
+
     public Matrix4 setIdentity() {
         this.m00 = 1;
         this.m01 = 0;
@@ -226,6 +242,32 @@ public class Matrix4 {
         result.y = mat.m10 * v.x + mat.m11 * v.y + mat.m12 * v.z + mat.m13;
         result.z = mat.m20 * v.x + mat.m21 * v.y + mat.m22 * v.z + mat.m23;
 
+        return result;
+    }
+
+    public static Matrix4 scale(Matrix4 mat, float x, float y, float z, Matrix4 result) {
+        result.m00 = mat.m00 * x;
+        result.m01 = mat.m01 * x;
+        result.m02 = mat.m02 * x;
+        result.m03 = mat.m03 * x;
+
+        result.m10 = mat.m10 * y;
+        result.m11 = mat.m11 * y;
+        result.m12 = mat.m12 * y;
+        result.m13 = mat.m13 * y;
+
+        result.m20 = mat.m20 * z;
+        result.m21 = mat.m21 * z;
+        result.m22 = mat.m22 * z;
+        result.m23 = mat.m23 * z;
+        return result;
+    }
+
+    public static Matrix4 translate(Matrix4 mat, float x, float y, float z, Matrix4 result) {
+        result.m30 += mat.m00 * x + mat.m10 * y + mat.m20 * z;
+        result.m31 += mat.m01 * x + mat.m11 * y + mat.m21 * z;
+        result.m32 += mat.m02 * x + mat.m12 * y + mat.m22 * z;
+        result.m33 += mat.m03 * x + mat.m13 * y + mat.m23 * z;
         return result;
     }
 

@@ -2,6 +2,7 @@ package structure.opengl;
 
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import stuff.TempVars;
 import stuff.Utils;
 
 /**
@@ -15,11 +16,14 @@ public class Camera {
     protected Matrix4 mat;
     protected Vector3 eye, view, up;
 
+    protected static final float MAX_PITCH = 65.0f;
     protected float yaw = 0.0f, pitch = 0.0f;
     protected Quaternion orientation = new Quaternion();
+    protected Quaternion yawq = new Quaternion(), pitchq = new Quaternion();
     protected float currentRotationAroundX = 0.0f;
     protected float mouseSensitivity = 1.0f;
-    protected float conversion = 1.0f;
+    protected float conversion = 5.0f;
+    protected float mults = 0;
 
     public Camera() {
         mat = new Matrix4();
@@ -57,15 +61,37 @@ public class Camera {
             return this;
         }
 
-        yaw += Math.toRadians(dy / (conversion * mouseSensitivity));
-        pitch += Math.toRadians(dx / (conversion * mouseSensitivity));
+        yaw -= dx / (conversion * mouseSensitivity);
+        pitch += dy / (conversion * mouseSensitivity);
+        float dxf = -dx / (conversion * mouseSensitivity);
+        float dyf = dy / (conversion * mouseSensitivity);
+        if(pitch > MAX_PITCH) {
+            pitch = MAX_PITCH;
+            dyf = 0;
+        }
+        else if(pitch < -MAX_PITCH) {
+            pitch = -MAX_PITCH;
+            dyf = 0;
+        }
 
-        orientation = Quaternion.fromEulerAngles(orientation, yaw, pitch, 0);
-//        up = Quaternion.transform(new Vector3f(0, 1, 0), orientation, new Vector3f());
-//        up = up.normalise(up);
-//        view = Vector3f.add(Quaternion.transform(new Vector3(0, 0, 1), orientation, new Vector3()), eye, new Vector3());
-        view = Quaternion.transform(Vector3.forward(), orientation).add(eye);
-        view.normalizeLocal();
+//        orientation = Quaternion.fromEulerAngles(orientation, yaw, pitch, 0);
+        // Allocation free code! :D (almost, at least)
+        TempVars vars = TempVars.get();
+        if(dx > 0) {
+        }
+        orientation = Quaternion.fromAxisAngle(vars.quat1, dxf, Vector3.UP).mult(orientation);
+        orientation = orientation.mult(Quaternion.fromAxisAngle(vars.quat1, dyf, Vector3.RIGHT));
+//        orientation = Quaternion.fromAxisAngle(vars.quat1, dxf, Vector3.UP)
+//            .mult(Quaternion.fromAxisAngle(vars.quat2, dyf, Vector3.RIGHT)).mult(orientation);
+//        orientation = orientation.mult(Quaternion.fromAxisAngle(vars.quat1, dyf, Vector3.right())
+//                .mult(Quaternion.fromAxisAngle(vars.quat2, dxf, Vector3.up())));
+//        orientation = Quaternion.fromAxisAngle(vars.quat1, yaw, Vector3.up())
+//                .mult(Quaternion.fromAxisAngle(vars.quat2, pitch, Vector3.right()));
+//        up = Quaternion.transform(vars.vect1.set(Vector3.UP), Quaternion.fromAxisAngle(vars.quat1, pitch, Vector3.RIGHT));
+//        up = up.normalizeLocal();
+        view.set(Vector3.transform(vars.vect1.set(Vector3.FORWARD), orientation).addLocal(eye));
+        vars.release();
+//        view.normalizeLocal();
         System.out.println(eye + " --- " + view + " --- " + up);
 
         Matrix4.lookAt(mat, eye, view, up);
@@ -73,35 +99,30 @@ public class Camera {
         return this;
     }
 
-    protected void rotateCamera(float angle, float x, float y, float z) {
-        Quaternion temp, quatView, result;
-
-        temp = Quaternion.fromAxisAngle(new Quaternion(), angle, new Vector3(x, y, z));
-        quatView = new Quaternion(0, view);
-        result = Quaternion.mult(Quaternion.mult(temp, quatView, new Quaternion()), temp.conjugate(), new Quaternion());
-//        result = Quaternion.mult(quatView, temp, new Quaternion());
-
-        view.x = result.x;
-        view.y = result.y;
-        view.z = result.z;
+    public Camera move(float x, float y, float z) {
+        return move(new Vector3(x, y, z));
     }
 
-    public Camera move(float x, float y, float z) {
-        eye.x += x;
-        eye.y += y;
-        eye.z += z;
-        view.x += x;
-        view.y += y;
-        view.z += z;
-        Utils.lookAt(mat, eye, view, up);
+    public Camera move(Vector3 v) {
+//        if (keyboard.IsKeyDown(Keys.Up))
+//            Direction *= Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), TurnSpeed);
+//        if (keyboard.IsKeyDown(Keys.Down))
+//            Direction *= Quaternion.CreateFromAxisAngle(new Vector3(-1, 0, 0), TurnSpeed);
+//        if (keyboard.IsKeyDown(Keys.Left))
+//            Direction = Quaternion.CreateFromAxisAngle(new Vector3(0, 0, 1), TurnSpeed) * Direction;
+//        if (keyboard.IsKeyDown(Keys.Right))
+//            Direction = Quaternion.CreateFromAxisAngle(new Vector3(0, 0, -1), TurnSpeed) * Direction;
+        TempVars vars = TempVars.get();
+        float y = v.y;
+        v = Vector3.transform(vars.vect1.set(v.x, 0, v.z), Quaternion.fromAxisAngle(vars.quat1, yaw, Vector3.UP));
+        eye.addLocal(v.set(v.x, y, v.z));
+        view = Vector3.transform(Vector3.forward(), orientation).add(eye);
+        vars.release();
+        Matrix4.lookAt(mat, eye, view, up);
         return this;
     }
 
     public Matrix4 getMatrix() {
-//        Matrix4f out = new Matrix4f();
-//        Matrix4f.translate(eye, out, out);
-//        Matrix4f.mul(out, orientation.toMatrix(), out);
-//        return Utils.lookAt(out, eye, new Vector3f(orientation.x, orientation.y, orientation.z), up);
         return mat;
     }
 }

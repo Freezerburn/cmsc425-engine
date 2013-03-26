@@ -12,6 +12,12 @@ import java.util.LinkedList;
  */
 public class Vector3 {
     public static final Vector3 ZERO = new Vector3(0.0f, 0.0f, 0.0f);
+    public static final Vector3 UP = Vector3.up();
+    public static final Vector3 DOWN = Vector3.down();
+    public static final Vector3 LEFT = Vector3.left();
+    public static final Vector3 RIGHT = Vector3.right();
+    public static final Vector3 FORWARD = Vector3.forward();
+    public static final Vector3 BACKWARD = Vector3.backward();
 
     protected static final int INITIAL_VECTORS = 1000;
     protected static final LinkedList<Vector3> recycled = new LinkedList<Vector3>();
@@ -146,12 +152,12 @@ public class Vector3 {
     }
 
     public Vector3 normalize() {
-        multLocal(length());
-        return this;
+        return mult(length());
     }
 
     public Vector3 normalizeLocal() {
-        return mult(length());
+        multLocal(length());
+        return this;
     }
 
     public Vector3 negate() {
@@ -267,6 +273,7 @@ public class Vector3 {
     }
 
     public static Vector3 transform(Vector3 v, Quaternion q, Vector3 result) {
+        Matrix4.mult(q.toMatrix(), v, result);
         return result;
     }
 

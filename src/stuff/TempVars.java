@@ -24,15 +24,12 @@ public class TempVars {
             quat2 = new Quaternion(),
             quat3 = new Quaternion();
 
-    public void lock() {
-        theLock.lock();
-    }
-
     public void release() {
         theLock.unlock();
     }
 
     public static TempVars get() {
+        theLock.lock();
         return ourInstance;
     }
 

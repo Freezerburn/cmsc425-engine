@@ -7,10 +7,8 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
-import structure.opengl.Camera;
-import structure.opengl.Geometry;
-import structure.opengl.Matrix4;
-import structure.opengl.ShaderProgram;
+import structure.opengl.*;
+import stuff.TempVars;
 import stuff.Utils;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -23,7 +21,7 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  * Date: 2/19/13
  * Time: 8:41 PM
  */
-public class Project1 extends GameApplicationDisplay {
+public class Project1 extends GameApplicationFrame {
     public static void main(String[] args) {
         new Project1();
     }
@@ -34,6 +32,8 @@ public class Project1 extends GameApplicationDisplay {
     Matrix4 model;
     Matrix4 modelToCameraMatrix, cameraToClipMatrix;
     Camera camera;
+    final static float CAM_SPEED = 5.75f;
+    Vector3 camVel;
     float frustumScale;
 
     boolean mouseRotationEnabled = false;
@@ -126,10 +126,10 @@ public class Project1 extends GameApplicationDisplay {
         cubeGeometry.addBufferColumns(cubeVertices, GL_STATIC_DRAW, Geometry.VERTEX_3F, Geometry.VERTEX_2F);
 
         projection = new Matrix4();
-        model = new Matrix4();
+        model = new Matrix4().scaleLocal(1, 10, 1).translateLocal(0, 1, 0);
 
         float near = 1.0f, far = 600.0f;
-        frustumScale = (float)(1.0 / Math.tan(Math.toRadians(20) / 2.0));
+        frustumScale = (float)(1.0 / Math.tan(Math.toRadians(70) / 2.0));
         cameraToClipMatrix = new Matrix4();
         cameraToClipMatrix.m00 = frustumScale;
         cameraToClipMatrix.m11 = frustumScale;
@@ -137,6 +137,7 @@ public class Project1 extends GameApplicationDisplay {
         cameraToClipMatrix.m23 = -1.0f;
         cameraToClipMatrix.m32 = (2 * near * far) / (near - far);
 
+        camVel = new Vector3();
         camera = new Camera().lookAt(
 //                20, 8, 5,
                 0, 0, 5,
@@ -153,7 +154,7 @@ public class Project1 extends GameApplicationDisplay {
         colorProg.setUniform("fragLoopDuration", 5.0f);
         colorProg.setUniform("time", 0.0f);
         colorProg.setUniform("camera", camera.getMatrix());
-        colorProg.setUniform("projection", Utils.perspective(projection, 50.0f, (float) windowWidth / (float) windowHeight, 0.1f, 100.0f));
+        colorProg.setUniform("projection", Utils.perspective(projection, 90.0f, (float) windowWidth / (float) windowHeight, 0.1f, 100.0f));
         colorProg.setUniform("model", model);
         colorProg.stopUsing();
     }
@@ -165,6 +166,9 @@ public class Project1 extends GameApplicationDisplay {
                 int dx = Mouse.getDX();
                 int dy = Mouse.getDY();
                 camera.rotateWithMouse(dx, dy);
+//                Mouse.setCursorPosition(windowHeight / 2, windowHeight / 2);
+//                Mouse.next();
+//                Mouse.getDX(); Mouse.getDY();
             }
         }
         while(Keyboard.next()) {
@@ -172,21 +176,54 @@ public class Project1 extends GameApplicationDisplay {
                     Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                 stop();
             }
-            else if(Keyboard.getEventKey() == Keyboard.KEY_1 &&
-                    Keyboard.getEventKeyState()) {
-                if(mouseRotationEnabled) {
-                    mouseRotationEnabled = false;
-                    System.out.println("Disabled mouse rotation");
-                }
-                else {
-                    mouseRotationEnabled = true;
-                    System.out.println("Enabled mouse rotation");
+            else if(Keyboard.getEventKeyState()) {
+                if(Keyboard.getEventKey() == Keyboard.KEY_1) {
+                    if(mouseRotationEnabled) {
+                        mouseRotationEnabled = false;
+                        Mouse.setGrabbed(false);
+                        System.out.println("Disabled mouse rotation");
+                    }
+                    else {
+                        mouseRotationEnabled = true;
+                        Mouse.setGrabbed(true);
+                        System.out.println("Enabled mouse rotation");
+                    }
                 }
             }
+
+            if(Keyboard.getEventKey() == Keyboard.KEY_W) {
+//                    camera.move(0, 0, -0.5f);
+                camVel.z -= Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            else if(Keyboard.getEventKey() == Keyboard.KEY_S) {
+//                    camera.move(0, 0, 0.5f);
+                camVel.z += Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            else if(Keyboard.getEventKey() == Keyboard.KEY_A) {
+//                camera.move(-0.5f, 0, 0);
+                camVel.x -= Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            else if(Keyboard.getEventKey() == Keyboard.KEY_D) {
+//                camera.move(0.5f, 0, 0);
+                camVel.x += Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            else if(Keyboard.getEventKey() == Keyboard.KEY_SPACE) {
+                camVel.y += Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            else if(Keyboard.getEventKey() == Keyboard.KEY_LSHIFT) {
+                camVel.y -= Keyboard.getEventKeyState() ? CAM_SPEED : -CAM_SPEED;
+            }
+            TempVars vars = TempVars.get();
+            System.out.println(Vector3.mult(camVel, dt, vars.vect1));
+            vars.release();
         }
         if(Display.isCloseRequested()) {
             stop();
         }
+
+        TempVars vars = TempVars.get();
+        camera.move(Vector3.mult(camVel, dt, vars.vect1));
+        vars.release();
 
 //        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

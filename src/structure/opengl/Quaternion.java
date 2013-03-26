@@ -1,7 +1,5 @@
 package structure.opengl;
 
-import com.sun.tools.internal.ws.wsdl.framework.QNameAction;
-
 /**
  * Created with IntelliJ IDEA.
  * User: freezerburn
@@ -47,6 +45,10 @@ public class Quaternion {
         return Quaternion.normalize(new Quaternion(this));
     }
 
+    public Quaternion normalizeLocal() {
+        return Quaternion.normalize(this);
+    }
+
     public Quaternion conjugate() {
         return Quaternion.conjugate(new Quaternion(this));
     }
@@ -83,62 +85,37 @@ public class Quaternion {
      */
 
     public static Quaternion fromAxisAngle(Quaternion q, float angle, Vector3 axis) {
+        angle = (float)Math.toRadians(angle);
         float sinAngle2 = (float)Math.sin(angle / 2.0);
         q.x = axis.x * sinAngle2;
         q.y = axis.y * sinAngle2;
         q.y = axis.y * sinAngle2;
-//        q.w = (float)Math.cos(angle / 2.0);
-        q.w = (float)Math.cos(angle);
+        q.w = (float)Math.cos(angle / 2.0);
+//        q.w = (float)Math.cos(angle);
         return q;
     }
 
-//    public static Quaternion fromEulerAngle(Quaternion q, float yaw, float pitch, float roll) {
-//        float piOverEighty = (float)Math.PI / 180.0f;
-//        float p = pitch * piOverEighty / 2.0f;
-//        float y = yaw * piOverEighty / 2.0f;
-//        float r = roll * piOverEighty / 2.0f;
-//
-//        float sinp = (float)Math.sin(p);
-//        float siny = (float)Math.sin(y);
-//        float sinr = (float)Math.sin(r);
-//        float cosp = (float)Math.cos(p);
-//        float cosy = (float)Math.cos(y);
-//        float cosr = (float)Math.cos(r);
-//
-//        q.x = sinr * cosp * cosy - cosr * sinp * siny;
-//        q.y = cosr * cosp * cosy + sinr * cosp * siny;
-//        q.z = cosr * cosp * siny - sinr * sinp * cosp;
-//        q.w = cosr * cosp * cosy + sinr * sinp * siny;
-//        Quaternion.normalize(q);
-//
-//        return q;
-//    }
-
     public static Quaternion fromEulerAngles(Quaternion q, float yaw, float pitch, float roll) {
-        float angle;
-        float sinRoll, sinPitch, sinYaw, cosRoll, cosPitch, cosYaw;
-        angle = pitch * 0.5f;
-        sinPitch = (float)Math.sin(angle);
-        cosPitch = (float)Math.cos(angle);
-        angle = roll * 0.5f;
-        sinRoll = (float)Math.sin(angle);
-        cosRoll = (float)Math.cos(angle);
-        angle = yaw * 0.5f;
-        sinYaw = (float)Math.sin(angle);
-        cosYaw = (float)Math.cos(angle);
+        yaw = (float)Math.toRadians(yaw);
+        pitch = (float)Math.toRadians(pitch);
+        roll = (float)Math.toRadians(roll);
 
-        // variables used to reduce multiplication calls.
-        float cosRollXcosPitch = cosRoll * cosPitch;
-        float sinRollXsinPitch = sinRoll * sinPitch;
-        float cosRollXsinPitch = cosRoll * sinPitch;
-        float sinRollXcosPitch = sinRoll * cosPitch;
+        float rollOver2 = roll * 0.5f;
+        float sinRollOver2 = (float)Math.sin((double)rollOver2);
+        float cosRollOver2 = (float)Math.cos((double)rollOver2);
+        float pitchOver2 = pitch * 0.5f;
+        float sinPitchOver2 = (float)Math.sin((double)pitchOver2);
+        float cosPitchOver2 = (float)Math.cos((double)pitchOver2);
+        float yawOver2 = yaw * 0.5f;
+        float sinYawOver2 = (float)Math.sin((double)yawOver2);
+        float cosYawOver2 = (float)Math.cos((double)yawOver2);
+        Quaternion result;
+        q.w = cosYawOver2 * cosPitchOver2 * cosRollOver2 + sinYawOver2 * sinPitchOver2 * sinRollOver2;
+        q.x = cosYawOver2 * sinPitchOver2 * cosRollOver2 + sinYawOver2 * cosPitchOver2 * sinRollOver2;
+        q.y = sinYawOver2 * cosPitchOver2 * cosRollOver2 - cosYawOver2 * sinPitchOver2 * sinRollOver2;
+        q.z = cosYawOver2 * cosPitchOver2 * sinRollOver2 - sinYawOver2 * sinPitchOver2 * cosRollOver2;
 
-        q.w = (cosRollXcosPitch * cosYaw - sinRollXsinPitch * sinYaw);
-        q.x = (cosRollXcosPitch * sinYaw + sinRollXsinPitch * cosYaw);
-        q.y = (sinRollXcosPitch * cosYaw + cosRollXsinPitch * sinYaw);
-        q.z = (cosRollXsinPitch * cosYaw - sinRollXcosPitch * sinYaw);
-
-        Quaternion.normalize(q);
+        q.normalizeLocal();
         return q;
     }
 

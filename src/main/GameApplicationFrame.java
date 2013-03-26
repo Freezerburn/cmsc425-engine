@@ -54,6 +54,7 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
             initBase();
             initGL();
             initData();
+            onResize(windowWidth, windowHeight);
             mainLoop();
             cleanup();
             Display.destroy();
@@ -83,6 +84,7 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
             }
             long nextTime = System.nanoTime();
             float delta = (nextTime - curTime) / 1000000000.0f;
+            curTime = nextTime;
             totalTime += delta;
             run(delta);
             Display.update(true);
@@ -145,6 +147,7 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
         pack();
         Display.setParent(canvas);
         setVisible(true);
+        setResizable(false);
 
         if(LWJGLUtil.getPlatform() == LWJGLUtil.PLATFORM_WINDOWS) {
             addWindowFocusListener(new WindowAdapter() {
