@@ -10,6 +10,7 @@ import stuff.Preferences;
 import texture.TextureManager;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -63,6 +64,12 @@ public class GameApplicationDisplay implements GameApplicationRunnable {
         while(running) {
             if(tickCount % 30 == 0) {
                 TextureManager.doMaintenance();
+            }
+            if(Display.getWidth() != windowWidth ||
+                    Display.getHeight() != windowHeight) {
+                onResize(Display.getWidth(), Display.getHeight());
+                windowWidth = Display.getWidth();
+                windowHeight = Display.getHeight();
             }
             long nextTime = System.nanoTime();
             float delta = (nextTime - curTime) / 1000000000.0f;
@@ -127,8 +134,11 @@ public class GameApplicationDisplay implements GameApplicationRunnable {
         Display.processMessages();
         windowWidth = width;
         windowHeight = height;
-        System.out.println("Running LWJGL without Java Frame");
+        System.out.println("Running LWJGL with native Display");
         System.out.println("OpenGL Version: " + glGetString(GL_VERSION));
+    }
+
+    protected void onResize(int width, int height) {
     }
 
     @Override
@@ -141,10 +151,22 @@ public class GameApplicationDisplay implements GameApplicationRunnable {
 
     @Override
     public void run(float dt) {
-        System.out.println("Running GameApplicationFrame");
+        System.out.println("Running GameApplicationDisplay");
     }
 
     @Override
     public void cleanup() {
+    }
+
+    @Override
+    public void setResizable(boolean resizable) {
+        Display.setResizable(resizable);
+    }
+
+    @Override
+    public void clear(int flags) {
+        while(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        }
+        glClear(flags);
     }
 }

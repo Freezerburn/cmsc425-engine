@@ -1,5 +1,6 @@
 package scene;
 
+import structure.opengl.Vector3;
 import stuff.Utils;
 
 import java.util.LinkedList;
@@ -67,7 +68,7 @@ public class Bounds {
     }
 
     protected void reset(Vector3 center, float width, float height, float depth) {
-//        System.out.println("Center: " + center);
+//        System.out.println("Center: " + view);
 //        System.out.println(String.format("w: %f, h: %f, d: %f", width, height, depth));
         float left = width == 0.0f ? center.x : center.x - width / 2.0f;
         float right = width == 0.0f ? center.x : center.x + width / 2.0f;

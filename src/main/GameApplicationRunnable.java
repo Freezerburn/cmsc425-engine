@@ -11,4 +11,6 @@ public interface GameApplicationRunnable {
     public void initData();
     public void run(float dt);
     public void cleanup();
+    public void setResizable(boolean resizable);
+    public void clear(int flags);
 }

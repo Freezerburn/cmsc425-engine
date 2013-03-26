@@ -1,5 +1,7 @@
 package scene;
 
+import structure.opengl.Vector3;
+
 import java.util.LinkedList;
 
 /**

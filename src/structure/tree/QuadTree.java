@@ -1,7 +1,7 @@
 package structure.tree;
 
 import scene.Bounds;
-import scene.Vector3;
+import structure.opengl.Vector3;
 
 import java.util.List;
 

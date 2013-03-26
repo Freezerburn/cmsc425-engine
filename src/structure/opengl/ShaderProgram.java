@@ -92,8 +92,9 @@ public class ShaderProgram {
         glUniform1f(loc, val);
     }
 
-    public void setUniform(String name, Matrix m) {
+    public void setUniform(String name, Matrix4 m) {
         m.store(matrixBuffer);
+        matrixBuffer.flip();
         int loc = getUniformLoc(name);
         glUniformMatrix4(loc, false, matrixBuffer);
     }

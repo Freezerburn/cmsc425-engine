@@ -2,7 +2,7 @@ package game.entimpl;
 
 import game.Entity;
 import scene.Bounds;
-import scene.Vector3;
+import structure.opengl.Vector3;
 
 /**
  * Created with IntelliJ IDEA.

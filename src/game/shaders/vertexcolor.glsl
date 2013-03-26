@@ -6,7 +6,12 @@ layout(location = 1) in vec4 color;
 smooth out vec4 theColor;
 uniform float loopDuration;
 uniform float time;
-uniform vec4 camera;
+
+uniform mat4 camera;
+uniform mat4 projection;
+uniform mat4 model;
+
+uniform mat4 cameraToClipMatrix;
 
 void main() {
     float timeScale = 3.14159f * 2.0f / loopDuration;
@@ -15,6 +20,7 @@ void main() {
         sin(time * 1.5f * timeScale) * 0.5f,
         0.0f,
         0.0f);
-    gl_Position = position + totalOffset;
+    //gl_Position = projection * camera * model * (position);
+    gl_Position = cameraToClipMatrix * camera * model * (position);
     theColor = color;
 }

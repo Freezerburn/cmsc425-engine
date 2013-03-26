@@ -11,10 +11,11 @@ import stuff.Preferences;
 import texture.TextureManager;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +43,7 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
     public static float totalTime;
 
     private boolean running = true;
+    private int[] sizeFromListener = new int[2];
 
 //    static {
 //        NativeLoader.load();
@@ -69,6 +71,13 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
         long curTime = System.nanoTime();
         long tickCount = 0;
         while(running) {
+            synchronized (sizeFromListener) {
+                if(sizeFromListener[0] != 0) {
+                    onResize(sizeFromListener[0], sizeFromListener[1]);
+                    sizeFromListener[0] = 0;
+                    sizeFromListener[1] = 0;
+                }
+            }
             if(tickCount % 30 == 0) {
                 TextureManager.doMaintenance();
             }
@@ -145,6 +154,35 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
                 }
             });
         }
+        addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+//                System.out.println(e.paramString());
+                String[] split = e.paramString().split(" ");
+                String newSize = split[split.length - 1].substring(0, split[split.length - 1].length() - 1);
+                String[] eachSize = newSize.split("x");
+//                System.out.println(Arrays.toString(eachSize));
+                int width = Integer.parseInt(eachSize[0]);
+                int height = Integer.parseInt(eachSize[1]);
+                synchronized (sizeFromListener) {
+                    sizeFromListener[0] = width;
+                    sizeFromListener[1] = height;
+                }
+//                System.out.println(width + ", " + height);
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+            }
+        });
 
         PixelFormat pixelFormat = new PixelFormat();
         ContextAttribs contextAttribs = new ContextAttribs(3, 2)
@@ -157,6 +195,10 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
         windowHeight = height;
         System.out.println("Running LWJGL in a Java Frame");
         System.out.println("OpenGL Version: " + glGetString(GL_VERSION));
+    }
+
+    protected void onResize(int width, int height) {
+        glViewport(0, 0, width, height);
     }
 
     @Override
@@ -174,5 +216,12 @@ public class GameApplicationFrame extends Frame implements GameApplicationRunnab
 
     @Override
     public void cleanup() {
+    }
+
+    @Override
+    public void clear(int flags) {
+        while(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        }
+        glClear(flags);
     }
 }
