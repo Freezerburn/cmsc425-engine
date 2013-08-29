@@ -19,7 +19,9 @@ public class TempVars {
 
     public Vector3 vect1 = new Vector3(),
             vect2 = new Vector3(),
-            vect3 = new Vector3();
+            vect3 = new Vector3(),
+            vect4 = new Vector3(),
+            vect5 = new Vector3();
     public Quaternion quat1 = new Quaternion(),
             quat2 = new Quaternion(),
             quat3 = new Quaternion();

@@ -86,13 +86,13 @@ public class QuadTree implements  NTreeBasic<Collidable<Bounds>> {
                         float halfWidth = startBounds.getWidth() / 2.0f;
                         float halfHeight = startBounds.getHeight() / 2.0f;
                         Vector3 temp = Vector3.get(startCenter.x - halfWidth / 2.0f, startCenter.y + halfHeight / 2.0f);
-                        boundsTL.setCenter(temp);
+                        boundsTL.setCenterLocal(temp);
                         temp.x = startCenter.x + halfWidth;
-                        boundsTR.setCenter(temp);
+                        boundsTR.setCenterLocal(temp);
                         temp.y -= halfHeight;
-                        boundsBR.setCenter(temp);
+                        boundsBR.setCenterLocal(temp);
                         temp.x -= halfWidth;
-                        boundsBL.setCenter(temp);
+                        boundsBL.setCenterLocal(temp);
                         Vector3.recycle(startCenter);
                         Vector3.recycle(temp);
                     }

@@ -2,6 +2,7 @@ package structure.opengl;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Matrix;
+import structure.mem.CleanupManager;
 import stuff.Two;
 import stuff.Utils;
 
@@ -25,9 +26,9 @@ public class ShaderProgram {
 
     protected int program = 0;
     protected boolean destroyed = false, linked = false;
-    protected LinkedList<Integer> allShaders = new LinkedList<Integer>();
+    protected LinkedList<Integer> allShaders = new LinkedList<>();
     protected FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(4 * 4);
-    protected HashMap<String, Integer> uniformNameToLoc = new HashMap<String, Integer>();
+    protected HashMap<String, Integer> uniformNameToLoc = new HashMap<>();
 
     public void link() {
         program = createProgram();
@@ -37,6 +38,14 @@ public class ShaderProgram {
         allShaders.clear();
         allShaders = null;
         linked = true;
+
+        final int closureProg = program;
+        CleanupManager.runOnGc(this, () -> {
+            if(!destroyed) {
+                System.out.println("Deleting glProgram: " + closureProg);
+                glDeleteProgram(closureProg);
+            }
+        });
     }
 
     public void addVertexShader(String file) {
@@ -92,6 +101,16 @@ public class ShaderProgram {
         glUniform1f(loc, val);
     }
 
+    public void setUniform(String name, Vector3 v) {
+        int loc = getUniformLoc(name);
+        glUniform3f(loc, v.x, v.y, v.z);
+    }
+
+    public void setUniform3(String name, FloatBuffer buf) {
+        int loc = getUniformLoc(name);
+        glUniform3(loc, buf);
+    }
+
     public void setUniform(String name, Matrix4 m) {
         m.store(matrixBuffer);
         matrixBuffer.flip();
@@ -101,7 +120,16 @@ public class ShaderProgram {
 
     public void destroy() {
         if(!destroyed) {
-            glDeleteProgram(program);
+            System.out.println("Shader " + program + " destroyed");
+            if(allShaders != null) {
+                for(int shader : allShaders) {
+                    glDeleteShader(shader);
+                }
+                allShaders.clear();
+            }
+            if(linked) {
+                glDeleteProgram(program);
+            }
             uniformNameToLoc.clear();
             uniformNameToLoc = null;
             program = 0;
@@ -114,7 +142,7 @@ public class ShaderProgram {
     }
 
     public boolean isValid() {
-        return destroyed;
+        return linked && !destroyed;
     }
 
     public boolean isLinked() {

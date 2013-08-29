@@ -146,17 +146,25 @@ public class Vector3 {
         return Vector3.mult(this, scalar, this);
     }
 
+    public Vector3 div(float scalar) {
+        return Vector3.div(this, scalar, new Vector3());
+    }
+
+    public Vector3 divLocal(float scalar) {
+        return Vector3.div(this, scalar, this);
+    }
+
     public float length() {
         // Casting = ick
         return (float)Math.sqrt((double)(x * x + y * y + z * z));
     }
 
     public Vector3 normalize() {
-        return mult(length());
+        return div(length());
     }
 
     public Vector3 normalizeLocal() {
-        multLocal(length());
+        divLocal(length());
         return this;
     }
 
@@ -268,6 +276,20 @@ public class Vector3 {
         return result;
     }
 
+    public static Vector3 div(Vector3 v1, Vector3 v2, Vector3 result) {
+        result.x = v1.x / v2.x;
+        result.y = v1.y / v2.y;
+        result.z = v1.z / v2.z;
+        return result;
+    }
+
+    public static Vector3 div(Vector3 v, float scalar, Vector3 result) {
+        result.x = v.x / scalar;
+        result.y = v.y / scalar;
+        result.z = v.z / scalar;
+        return result;
+    }
+
     public static Vector3 transform(Vector3 v, Quaternion q) {
         return transform(v, q, new Vector3());
     }
@@ -294,5 +316,39 @@ public class Vector3 {
 
     public static Vector3 negate(Vector3 v, Vector3 result) {
         return Vector3.mult(v, -1, result);
+    }
+
+    public static Vector3 normal(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 result) {
+        Vector3 side1 = v2.sub(v1);
+        Vector3 side2 = v3.sub(v1);
+        return Vector3.cross(side1, side2, result);
+    }
+
+    public static float max(Vector3 v) {
+        float ret = v.x;
+        if(v.y > ret) {
+            ret = v.y;
+        }
+        if(v.z > ret) {
+            ret = v.z;
+        }
+        return ret;
+    }
+
+    public static float min(Vector3 v) {
+        float ret = v.x;
+        if(v.y < ret) {
+            ret = v.y;
+        }
+        if(v.z < ret) {
+            ret = v.z;
+        }
+        return ret;
+    }
+
+    public static float dot(Vector3 v1, Vector3 v2) {
+        return v1.x * v2.x +
+                v1.y * v2.y +
+                v1.z * v2.z;
     }
 }

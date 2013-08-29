@@ -5,6 +5,7 @@ import org.lwjgl.BufferUtils;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -17,12 +18,14 @@ import static org.lwjgl.opengl.GL30.*;
  * Date: 2/28/13
  * Time: 10:22 AM
  */
-public class Geometry {
-    public static int MAX_VBO = 16;
-    public static int VERTEX_1F = 0;
-    public static int VERTEX_2F = 1;
-    public static int VERTEX_3F = 2;
-    public static int VERTEX_4F = 3;
+public class Mesh {
+    public static final int MAX_VBO = 16;
+    public static final int VERTEX_1F = 0;
+    public static final int VERTEX_2F = 1;
+    public static final int VERTEX_3F = 2;
+    public static final int VERTEX_4F = 3;
+
+    public static final Object VAO_LOCK = new Object();
 
     protected static int currentVao = -1;
 
@@ -34,7 +37,7 @@ public class Geometry {
     protected short numBuffers = 0, numAttributes = 0;
     protected boolean destroyed = false;
 
-    public Geometry() {
+    public Mesh() {
         this.vao = glGenVertexArrays();
     }
 
@@ -170,21 +173,23 @@ public class Geometry {
     }
 
     public void draw() {
-        if(currentVao != vao) {
-            currentVao = vao;
-            glBindVertexArray(vao);
+        synchronized (Mesh.VAO_LOCK) {
+            if(currentVao != vao) {
+                currentVao = vao;
+                glBindVertexArray(vao);
+            }
+            if(usesIndices) {
+                glDrawElements(0, (IntBuffer)null);
+            }
+            else {
+                glDrawArrays(mode, 0, numVertices);
+            }
+            // For now, we immediately unbind the vao when done drawing. This might change later,
+            // but is deliberately done here to prevent code outside of the Mesh class (or another Mesh?)
+            // from modifying the vao's state.
+            currentVao = 0;
+            glBindVertexArray(0);
         }
-        if(usesIndices) {
-            glDrawElements(0, (IntBuffer)null);
-        }
-        else {
-            glDrawArrays(mode, 0, numVertices);
-        }
-        // For now, we immediately unbind the vao when done drawing. This might change later,
-        // but is deliberately done here to prevent code outside of the Geometry class from
-        // modifying the vao's state.
-        currentVao = 0;
-        glBindVertexArray(0);
     }
 
     public void destroy() {

@@ -1,1 +1,82 @@
-This file was created by IntelliJ IDEA 12.0.4 for binding GitHub repository
+Vincent Kuyatt (UID: vkuyatt) -- CMSC425 Project 2 "Tommy the Terrapin"
+Email: vkuyatt@terpmail.umd.edu
+====================================================
+Instructions:
+    Movement:
+        All movement instructions are relative to the camera
+        W - Move forward
+        S - Move backward
+        A - Move left (doesn't turn)
+        D - Move right (doesn't turn)
+        Space - Flies up (disables gravity while held)
+        Shift - Flies down (disables gravity while held)
+        2 - Temporarily disables gravity until space/shift are pressed
+    Camera:
+        1 - Grabs mouse (allows you to look around, not grabbed by default)
+        E - Switch between first and third person views
+        Mouse - Look around
+    Lighting:
+        P - Light position 1 (default)
+        O - Light position 2 (overhead)
+        I - Light position 3 (opposite of 1)
+
+        Z - Shader color 1 (full white, default)
+        X - Shader color 2 (neon green)
+        C - Shader color 3 (purple/magenta)
+        V - Shader color 4 (orange)
+    Quit:
+        Q, Esc - Closes application
+        Can also close with the standard "X" that is part of the window
+
+----------------------------------------------------
+Known Bugs:
+    When the mouse is moved too fast, the camera rotation can start to get
+        a bit strange. Can only fix this by re-starting the application.
+    When the mouse is moved too fast in third-person mode, Tommy can de-sync
+        from the camera rotation and face a different way than the camera.
+        Going to first person and then back to third fixes this.
+    Collision detection isn't set properly in third person mode, so Tommy
+        tends to clip through things.
+    Textures aren't correctly applied to the four pillars, so the tree texture
+        goes in random directions and doesn't look particularly good. I left
+        this alone because it was less important than getting everything else
+        working.
+    Normals are static and never dynamically calculated, so when Tommy is moved
+        around in third person mode the lighting on him never changes.
+    The shader for lighting is technically incomplete. It only calculates the
+        diffuse (and technically it should also include ambient) lighting.
+        This is only 1 (or 2) part(s) of standard Phong shading. The specular
+        portion is not calculated. It is also highly simplistic and purely
+        dependant upon angle of incidence between the light and surface.
+
+----------------------------------------------------
+Sources:
+    I'll try to get all of them, but I used a TON of websites so I might not get them all.
+    Modern OpenGL Tutorials:
+        * http://tomdalling.com/blog/category/modern-opengl/
+        * http://www.arcsynthesis.org/gltut/
+        * http://www.opengl-tutorial.org/
+    Math (Quaternion, Matrix, Vector) Tutorials:
+        * http://www.cs.princeton.edu/~gewang/projects/darth/stuff/quat_faq.html
+        * http://www.java-gaming.org/topics/rotation-matrix-matrix-problem/14760/view.html
+        * http://stackoverflow.com/questions/11667783/quaternion-and-normalization
+        * http://xboxforums.create.msdn.com/forums/p/21332/114658.aspx
+        * http://stackoverflow.com/questions/12088610/conversion-between-euler-quaternion-like-in-unity3d-engine?lq=1
+
+----------------------------------------------------
+Building:
+    Same as the last project, dump all of the source files into your favorite Java IDE of choice
+        and add the LWJGL libraries following:
+        http://www.lwjgl.org/wiki/index.php?title=Setting_Up_LWJGL_with_Eclipse
+        for example.
+        (http://www.lwjgl.org/wiki/index.php?title=Main_Page has the list of all IDEs)
+        Then you just need to tell the IDE to build and run the program, using:
+        src.game.Project1
+        as the main class.
+    Please note that this project requires at least OpenGL 3.2.
+
+----------------------------------------------------
+Lastly:
+    If you have to look at my source code, I am truly sorry. I had the best of intentions when
+        initially putting everything together, and then it turned into a massive glob of nasty
+        code. At least it mostly works.

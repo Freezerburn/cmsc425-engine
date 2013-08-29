@@ -22,13 +22,13 @@ import static org.lwjgl.opengl.GL11.glGetTexImage;
  * Time: 5:57 PM
  */
 public class TextureManager {
-    private static final Map<String, Texture> mTextureMap = new HashMap<String, Texture>();
-    private static final Map<String, Texture[]> mTextureTileMap = new HashMap<String, Texture[]>();
+    private static final Map<String, Texture> mTextureMap = new HashMap<>();
+    private static final Map<String, Texture[]> mTextureTileMap = new HashMap<>();
 
-    private static final Map<String, Texture> retained = new HashMap<String, Texture>();
-    private static final ReferenceQueue<Texture> reaped = new ReferenceQueue<Texture>();
-    private static final Map<String, Reference<Texture>> textures = new HashMap<String, Reference<Texture>>();
-    private static final Map<Reference<Texture>, Two<Integer, String>> reapedTextureIds = new HashMap<Reference<Texture>, Two<Integer, String>>();
+    private static final Map<String, Texture> retained = new HashMap<>();
+    private static final ReferenceQueue<Texture> reaped = new ReferenceQueue<>();
+    private static final Map<String, Reference<Texture>> textures = new HashMap<>();
+    private static final Map<Reference<Texture>, Two<Integer, String>> reapedTextureIds = new HashMap<>();
     private static final Object texturesLock = new Object();
 
     public static final Texture DUMMY = fromBufferedImage(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), "DUMMY");
@@ -161,13 +161,14 @@ public class TextureManager {
         }
 
         TextureLoader loader = new BasicTextureLoader(Utils.loadImage(file), name, removeBackground);
+        Texture fromLoader = loader.get();
         if(retain) {
-            retained.put(name, loader.get());
+            retained.put(name, fromLoader);
         }
         else {
-            textures.put(name, new PhantomReference<Texture>(loader.get(), reaped));
+            textures.put(name, new PhantomReference<Texture>(fromLoader, reaped));
         }
-        return loader.get();
+        return fromLoader;
     }
 
     public static Texture[] loadTileMap(String file, int width, int height) {
@@ -265,7 +266,7 @@ public class TextureManager {
 
     public static Texture[] getArrayFromTileMap(String name, int startx, int starty,
                                                 int endx, int endy) {
-        ArrayList<Texture> ret = new ArrayList<Texture>();
+        ArrayList<Texture> ret = new ArrayList<>();
         while (starty <= endy) {
             while (startx <= endx) {
                 ret.add(mTextureMap.get(name + "_" + startx + "," + starty));

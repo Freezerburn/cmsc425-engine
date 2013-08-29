@@ -1,5 +1,9 @@
 package main;
 
+import function.IntBinaryConsumer;
+
+import java.util.function.IntBinaryOperator;
+
 /**
  * Created with IntelliJ IDEA.
  * User: freezerburn
@@ -12,5 +16,5 @@ public interface GameApplicationRunnable {
     public void run(float dt);
     public void cleanup();
     public void setResizable(boolean resizable);
-    public void clear(int flags);
+    public void setTickRate(float tickRate);
 }

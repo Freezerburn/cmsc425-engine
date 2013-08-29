@@ -56,19 +56,19 @@ public class NativeLoader {
 	private static final String WINDOWS_NATIVES_DEFAULT_PACKAGE = WINDOWS_NATIVE_JAR.substring(0,WINDOWS_NATIVE_JAR.indexOf(".jar"));
 	
 	/**
-	 * The system property to set for the library path; it points to the temp directory
+	 * The system property to set for the library path; it points to the rotateFullTerp directory
 	 * the natives are unpacked into.
 	 */
 	private static final String LIBRARY_SYSTEM_PROPERTY = "java.library.path";
 	
 	/**
-	 * The system property to set for the LWJGL library path; it points to the temp directory
+	 * The system property to set for the LWJGL library path; it points to the rotateFullTerp directory
 	 * the natives are unpacked into. This is redundant in reality, but it can't hurt.
 	 */
 	private static final String LWJGL_LIBRARY_PROPERTY = "org.lwjgl.librarypath";
 	
 	/**
-	 * The system property to set for the Jinput library path; it points to the temp directory
+	 * The system property to set for the Jinput library path; it points to the rotateFullTerp directory
 	 * the natives are unpacked into. This is redundant in reality, but it can't hurt.
 	 */
 	private static final String JINPUT_LIBRARY_PROPERTY = "net.java.games.input.librarypath";
@@ -116,7 +116,7 @@ public class NativeLoader {
 	
 	
 	/**
-	 * The temp directory that the files are placed in. Held in memory so that calls to {@link #destroy()} are able
+	 * The rotateFullTerp directory that the files are placed in. Held in memory so that calls to {@link #destroy()} are able
 	 * to delete the directory and it's content libraries. 
 	 */
 	private static File outputDirectoryHandle = null;
@@ -130,7 +130,7 @@ public class NativeLoader {
 	
 	
 	/**
-	 * Determines the current operating system, extracts the OS dependent native libraries to a temp directory, and
+	 * Determines the current operating system, extracts the OS dependent native libraries to a rotateFullTerp directory, and
 	 * adds that temporary directory to the classpath. Once the load call succeeds any furthur calls are short-circuted
 	 * for performance reasons. 
 	 */

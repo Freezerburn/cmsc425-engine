@@ -1,7 +1,6 @@
 package structure.opengl;
 
 import org.lwjgl.BufferUtils;
-import stuff.Utils;
 
 import java.nio.FloatBuffer;
 
@@ -13,8 +12,10 @@ import java.nio.FloatBuffer;
  */
 public class Matrix4 {
     public static final float GLMAT_EPSILON = 0.000001f;
-    private static final float[] matrixOpArr = new float[16];
     private static final FloatBuffer matrixOpBuff = BufferUtils.createFloatBuffer(16);
+    private static final float[] matrixOpArr = new float[16];
+    private static final Matrix4 tempMat = new Matrix4();
+    private static final Vector3 tempVec = new Vector3();
 
     public float m00, m01, m02, m03,
         m10, m11, m12, m13,
@@ -101,101 +102,61 @@ public class Matrix4 {
     }
 
     public void load(FloatBuffer buf) {
-        load(buf, false);
-    }
+        // Column-major order for OpenGL.
+        m00 = buf.get();
+        m10 = buf.get();
+        m20 = buf.get();
+        m30 = buf.get();
 
-    public void load(FloatBuffer buf, boolean columnMajor) {
-        if(columnMajor) {
-            m00 = buf.get();
-            m10 = buf.get();
-            m20 = buf.get();
-            m30 = buf.get();
+        m01 = buf.get();
+        m11 = buf.get();
+        m21 = buf.get();
+        m31 = buf.get();
 
-            m01 = buf.get();
-            m11 = buf.get();
-            m21 = buf.get();
-            m31 = buf.get();
+        m02 = buf.get();
+        m12 = buf.get();
+        m22 = buf.get();
+        m32 = buf.get();
 
-            m02 = buf.get();
-            m12 = buf.get();
-            m22 = buf.get();
-            m32 = buf.get();
-
-            m03 = buf.get();
-            m13 = buf.get();
-            m23 = buf.get();
-            m33 = buf.get();
-        }
-        else {
-            m00 = buf.get();
-            m01 = buf.get();
-            m02 = buf.get();
-            m03 = buf.get();
-
-            m10 = buf.get();
-            m11 = buf.get();
-            m12 = buf.get();
-            m13 = buf.get();
-
-            m20 = buf.get();
-            m21 = buf.get();
-            m22 = buf.get();
-            m23 = buf.get();
-
-            m30 = buf.get();
-            m31 = buf.get();
-            m32 = buf.get();
-            m33 = buf.get();
-        }
+        m03 = buf.get();
+        m13 = buf.get();
+        m23 = buf.get();
+        m33 = buf.get();
     }
 
     public void store(FloatBuffer buf) {
-        store(buf, false);
+        // Column-major order for OpenGL.
+        buf.put(m00);
+        buf.put(m10);
+        buf.put(m20);
+        buf.put(m30);
+
+        buf.put(m01);
+        buf.put(m11);
+        buf.put(m21);
+        buf.put(m31);
+
+        buf.put(m02);
+        buf.put(m12);
+        buf.put(m22);
+        buf.put(m32);
+
+        buf.put(m03);
+        buf.put(m13);
+        buf.put(m23);
+        buf.put(m33);
     }
 
-    public void store(FloatBuffer buf, boolean columnMajor) {
-        if(columnMajor) {
-            buf.put(m00);
-            buf.put(m10);
-            buf.put(m20);
-            buf.put(m30);
-
-            buf.put(m01);
-            buf.put(m11);
-            buf.put(m21);
-            buf.put(m31);
-
-            buf.put(m02);
-            buf.put(m12);
-            buf.put(m22);
-            buf.put(m32);
-
-            buf.put(m03);
-            buf.put(m13);
-            buf.put(m23);
-            buf.put(m33);
-        }
-        else {
-            buf.put(m00);
-            buf.put(m01);
-            buf.put(m02);
-            buf.put(m03);
-
-            buf.put(m10);
-            buf.put(m11);
-            buf.put(m12);
-            buf.put(m13);
-
-            buf.put(m20);
-            buf.put(m21);
-            buf.put(m22);
-            buf.put(m23);
-
-            buf.put(m30);
-            buf.put(m31);
-            buf.put(m32);
-            buf.put(m33);
-        }
+    @Override
+    public String toString() {
+        return String.format("[\n%-8.2f %-8.2f %-8.2f %-8.2f\n" +
+                "%-8.2f %-8.2f %-8.2f %-8.2f\n" +
+                "%-8.2f %-8.2f %-8.2f %-8.2f\n" +
+                "%-8.2f %-8.2f %-8.2f %-8.2f\n]",
+                m00, m01, m02, m03,
+                m10, m11, m12, m13,
+                m20, m21, m22, m23,
+                m30, m31, m32, m33);
     }
 
     /*
@@ -206,7 +167,7 @@ public class Matrix4 {
      */
 
     public static Matrix4 mult(Matrix4 A, Matrix4 B) {
-        return Matrix4.mult(A, B, new Matrix4());
+        return Matrix4.mult(A, B, tempMat.setIdentity());
     }
 
     public static Matrix4 mult(Matrix4 A, Matrix4 B, Matrix4 result) {
@@ -228,13 +189,13 @@ public class Matrix4 {
         result.m30 = A.m30 * B.m00 + A.m31 * B.m10 + A.m32 * B.m20 + A.m33 * B.m30;
         result.m31 = A.m30 * B.m01 + A.m31 * B.m11 + A.m32 * B.m21 + A.m33 * B.m31;
         result.m32 = A.m30 * B.m02 + A.m31 * B.m12 + A.m32 * B.m22 + A.m33 * B.m32;
-        result.m32 = A.m30 * B.m03 + A.m31 * B.m13 + A.m32 * B.m23 + A.m33 * B.m33;
+        result.m33 = A.m30 * B.m03 + A.m31 * B.m13 + A.m32 * B.m23 + A.m33 * B.m33;
 
         return result;
     }
 
     public static Vector3 mult(Matrix4 mat, Vector3 v) {
-        return Matrix4.mult(mat, v, new Vector3());
+        return Matrix4.mult(mat, v, tempVec.set(0, 0, 0));
     }
 
     public static Vector3 mult(Matrix4 mat, Vector3 v, Vector3 result) {
@@ -246,28 +207,83 @@ public class Matrix4 {
     }
 
     public static Matrix4 scale(Matrix4 mat, float x, float y, float z, Matrix4 result) {
-        result.m00 = mat.m00 * x;
-        result.m01 = mat.m01 * x;
-        result.m02 = mat.m02 * x;
-        result.m03 = mat.m03 * x;
-
-        result.m10 = mat.m10 * y;
-        result.m11 = mat.m11 * y;
-        result.m12 = mat.m12 * y;
-        result.m13 = mat.m13 * y;
-
-        result.m20 = mat.m20 * z;
-        result.m21 = mat.m21 * z;
-        result.m22 = mat.m22 * z;
-        result.m23 = mat.m23 * z;
+        tempMat.setIdentity();
+        tempMat.m00 = x;
+        tempMat.m11 = y;
+        tempMat.m22 = z;
+        Matrix4.mult(tempMat, mat, result);
         return result;
     }
 
     public static Matrix4 translate(Matrix4 mat, float x, float y, float z, Matrix4 result) {
-        result.m30 += mat.m00 * x + mat.m10 * y + mat.m20 * z;
-        result.m31 += mat.m01 * x + mat.m11 * y + mat.m21 * z;
-        result.m32 += mat.m02 * x + mat.m12 * y + mat.m22 * z;
-        result.m33 += mat.m03 * x + mat.m13 * y + mat.m23 * z;
+        tempMat.setIdentity();
+        tempMat.m30 = x;
+        tempMat.m31 = y;
+        tempMat.m32 = z;
+        Matrix4.mult(tempMat, mat, result);
+        return result;
+    }
+
+    public static Matrix4 rotate(Matrix4 mat, float x, float y, float z, Matrix4 result) {
+        x = (float)Math.toRadians(x);
+        y = (float)Math.toRadians(y);
+        z = (float)Math.toRadians(z);
+        float A = (float)Math.cos(x);
+        float B = (float)Math.sin(x);
+        float C = (float)Math.cos(y);
+        float D = (float)Math.sin(y);
+        float E = (float)Math.cos(z);
+        float F = (float)Math.sin(z);
+
+        float AD = A * D;
+        float BD = B * D;
+
+        tempMat.m00 = C * E;
+        tempMat.m01 = -C * F;
+        tempMat.m02 = D;
+        tempMat.m03 = 0;
+
+        tempMat.m10 = BD * E + A * F;
+        tempMat.m11 = -BD * F + A * E;
+        tempMat.m12 = -B * C;
+        tempMat.m13 = 0;
+
+        tempMat.m20 = -AD * E + B * F;
+        tempMat.m21 = AD * F + B * E;
+        tempMat.m22 = A * C;
+        tempMat.m23 = 0;
+
+        tempMat.m30 = 0;
+        tempMat.m31 = 0;
+        tempMat.m32 = 0;
+        tempMat.m33 = 0;
+
+        Matrix4.mult(tempMat, mat, result);
+
+        return result;
+    }
+
+    public static Matrix4 transpose(Matrix4 mat, Matrix4 result) {
+        result.m00 = mat.m00;
+        result.m01 = mat.m10;
+        result.m02 = mat.m20;
+        result.m03 = mat.m30;
+
+        result.m10 = mat.m01;
+        result.m11 = mat.m11;
+        result.m12 = mat.m21;
+        result.m13 = mat.m31;
+
+        result.m20 = mat.m02;
+        result.m21 = mat.m12;
+        result.m22 = mat.m22;
+        result.m23 = mat.m32;
+
+        result.m30 = mat.m03;
+        result.m31 = mat.m13;
+        result.m32 = mat.m23;
+        result.m33 = mat.m33;
+
         return result;
     }
 
@@ -323,6 +339,9 @@ public class Matrix4 {
             y2 *= len;
         }
 
+        /*
+        TODO: Refactor to just use mat directly.
+         */
         matrixOpArr[0] = (float)x0;
         matrixOpArr[1] = (float)y0;
         matrixOpArr[2] = (float)z0;
@@ -345,5 +364,55 @@ public class Matrix4 {
         matrixOpBuff.flip();
 
         return mat;
+    }
+
+    public static Matrix4 perspective(Matrix4 outm, float fov, float near, float far) {
+        float frustumScale = (float)(1.0 / Math.tan(Math.toRadians(fov) / 2.0));
+
+        outm.m00 = frustumScale;
+        outm.m01 = 0;
+        outm.m02 = 0;
+        outm.m03 = 0;
+
+        outm.m10 = 0;
+        outm.m11 = frustumScale;
+        outm.m12 = 0;
+        outm.m13 = 0;
+
+        outm.m20 = 0;
+        outm.m21 = 0;
+        outm.m22 = (far + near) / (near - far);
+        outm.m23 = -1.0f;
+
+        outm.m30 = 0;
+        outm.m31 = 0;
+        outm.m32 = (2 * near * far) / (near - far);
+        outm.m33 = 0;
+
+        return outm;
+    }
+
+    public static Matrix4 orthographic(Matrix4 out, float left, float right, float bottom, float top, float near, float far) {
+        out.m00 = 2.0f / (right - left);
+        out.m10 = 0.0f;
+        out.m20 = 0.0f;
+        out.m30 = -(right - left) / (right - left);
+
+        out.m01 = 0.0f;
+        out.m11 = 2.0f / (top - bottom);
+        out.m21 = 0.0f;
+        out.m31 = -(top - bottom) / (top - bottom);
+
+        out.m02 = 0.0f;
+        out.m12 = 0.0f;
+        out.m22 = -2.0f / (far - near);
+        out.m32 = -(far + near) / (far - near);
+
+        out.m03 = 0.0f;
+        out.m13 = 0.0f;
+        out.m23 = 0.0f;
+        out.m33 = 1.0f;
+
+        return out;
     }
 }

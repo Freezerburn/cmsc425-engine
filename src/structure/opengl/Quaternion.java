@@ -61,9 +61,9 @@ public class Quaternion {
         return Quaternion.fromAxisAngle(new Quaternion(this), angle, axis);
     }
 
-    public Matrix4 toMatrixUnit() {
-        return Quaternion.toMatrixUnit(new Matrix4(), this);
-    }
+//    public Matrix4 toMatrixUnit() {
+//        return Quaternion.toMatrixUnit(new Matrix4(), this);
+//    }
 
     public Matrix4 toMatrix() {
         return Quaternion.toMatrix(new Matrix4(), this);
@@ -119,29 +119,29 @@ public class Quaternion {
         return q;
     }
 
-    public static Matrix4 toMatrixUnit(Matrix4 out, Quaternion q) {
-        out.m00 = 1 - 2 * q.y * q.y - 2 * q.z * q.z;
-        out.m01 = 2 * q.x * q.y - 2 * q.w * q.z;
-        out.m02 = 2 * q.x * q.z + 2 * q.w + q.y;
-        out.m03 = 0;
-
-        out.m10 = 2 * q.x * q.y + 2 * q.w * q.z;
-        out.m11 = 1 - 2 * q.x * q.x - 2 * q.z * q.z;
-        out.m12 = 2 * q.y * q.z + 2 * q.w * q.x;
-        out.m13 = 0;
-
-        out.m20 = 2 * q.x * q.z - 2 * q.w * q.z;
-        out.m21 = 2 * q.y * q.z - 2 * q.w * q.x;
-        out.m22 = 1 - 2 * q.x * q.x - 2 * q.y * q.y;
-        out.m23 = 0;
-
-        out.m30 = 0;
-        out.m31 = 0;
-        out.m32 = 0;
-        out.m33 = 1;
-
-        return out;
-    }
+//    public static Matrix4 toMatrixUnit(Matrix4 out, Quaternion q) {
+//        out.m00 = 1 - 2 * q.y * q.y - 2 * q.z * q.z;
+//        out.m01 = 2 * q.x * q.y - 2 * q.w * q.z;
+//        out.m02 = 2 * q.x * q.z + 2 * q.w + q.y;
+//        out.m03 = 0;
+//
+//        out.m10 = 2 * q.x * q.y + 2 * q.w * q.z;
+//        out.m11 = 1 - 2 * q.x * q.x - 2 * q.z * q.z;
+//        out.m12 = 2 * q.y * q.z + 2 * q.w * q.x;
+//        out.m13 = 0;
+//
+//        out.m20 = 2 * q.x * q.z - 2 * q.w * q.z;
+//        out.m21 = 2 * q.y * q.z - 2 * q.w * q.x;
+//        out.m22 = 1 - 2 * q.x * q.x - 2 * q.y * q.y;
+//        out.m23 = 0;
+//
+//        out.m30 = 0;
+//        out.m31 = 0;
+//        out.m32 = 0;
+//        out.m33 = 1;
+//
+//        return out;
+//    }
 
     public static Matrix4 toMatrix(Matrix4 out, Quaternion q) {
         out.m00 = 1 - 2 * q.y * q.y - 2 * q.z * q.z;
@@ -155,7 +155,7 @@ public class Quaternion {
         out.m13 = 0;
 
         out.m20 = 2 * q.x * q.z - 2 * q.w * q.y;
-        out.m21 = 2 * q.y * q.z + 2 * q.w + q.x;
+        out.m21 = 2 * q.y * q.z + 2 * q.w * q.x;
         out.m22 = 1 - 2 * q.x * q.x - 2 * q.y * q.y;
         out.m23 = 0;
 
@@ -167,12 +167,28 @@ public class Quaternion {
         return out;
     }
 
+    public static float length(Quaternion q) {
+        return (float)Math.sqrt(Quaternion.length2(q));
+    }
+
+    public static float length2(Quaternion q) {
+        return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+    }
+
     public static Quaternion mult(Quaternion A, Quaternion B, Quaternion C) {
         C.x = A.w*B.x + A.x*B.w + A.y*B.z - A.z*B.y;
         C.y = A.w*B.y + A.y*B.w + A.z*B.x - A.x*B.z;
         C.z = A.w*B.z + A.z*B.w + A.x*B.y - A.y*B.x;
         C.w = A.w*B.w - A.x*B.x - A.y*B.y - A.z*B.z;
         return C;
+    }
+
+    public static Quaternion mult(Quaternion q, float scalar, Quaternion result) {
+        result.x = q.x * scalar;
+        result.y = q.y * scalar;
+        result.z = q.z * scalar;
+        result.w = q.w * scalar;
+        return result;
     }
 
     public static Vector3 mult(Quaternion A, Vector3 V, Vector3 B) {
@@ -211,11 +227,15 @@ public class Quaternion {
     }
 
     public static Quaternion normalize(Quaternion q) {
-        float len = q.length();
-        q.x = q.x / len;
-        q.y = q.y / len;
-        q.z = q.y / len;
-        q.w = q.w / len;
+        // This method for normalization taken from:
+        // http://stackoverflow.com/questions/11667783/quaternion-and-normalization
+        float len2 = Quaternion.length2(q);
+        if(Math.abs(1 - len2) < 2.107342e-08) {
+            Quaternion.mult(q, 2.0f / (1 + len2), q);
+        }
+        else {
+            Quaternion.mult(q, 1.0f / (float)Math.sqrt(len2), q);
+        }
         return q;
     }
 
